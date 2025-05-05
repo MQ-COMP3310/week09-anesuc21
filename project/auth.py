@@ -3,6 +3,7 @@ from flask_login import login_user, login_required, logout_user
 from sqlalchemy import text
 from .models import User
 from . import db, app
+ 
 
 auth = Blueprint('auth', __name__)
 
@@ -16,7 +17,15 @@ def login_post():
     password = request.form.get('password')
     remember = True if request.form.get('remember') else False
 
+   user = User.query.filter_by(email=email).first()
+
+try:
+    valid = validate_email(email)
+    email = valid.email
     user = User.query.filter_by(email=email).first()
+except EmailNotValidError:
+    user = None
+
 
     # check if the user actually exists
     # take the user-supplied password and compare it with the stored password
@@ -39,7 +48,7 @@ def signup_post():
     name = request.form.get('name')
     password = request.form.get('password')
 
-    user = db.session.execute(text('select * from user where email = "' + email +'"')).all()
+    user = User.query.filter_by(email=email).first()
     if len(user) > 0: # if a user is found, we want to redirect back to signup page so user can try again
         flash('Email address already exists')  # 'flash' function stores a message accessible in the template code.
         app.logger.debug("User email already exists")
